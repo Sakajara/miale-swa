@@ -4,8 +4,9 @@ husisha { mfuatano.swa }
 husisha { faili.swa }
 
 // miale.swa -- Kifuatilia-miale (raytracer) kwa Swa safi.
-// Huchora duara tatu zenye rangi tofauti, zikiangazwa na taa moja
-// (mwanga wa "diffuse"), na kuandika picha kwenye miale.ppm.
+// Huchora duara tatu zenye rangi tofauti kwenye sakafu ya ubao wa chesi,
+// zikiangazwa na taa moja (mwanga wa "diffuse" pamoja na vivuli), na
+// kuandika picha kwenye miale.ppm.
 
 N32 UPANA = 400;
 N32 UREFU = 300;
@@ -56,18 +57,87 @@ D64 mwale_karibu(Mwale m) {
     rudisha bora;
 }
 
+// Sakafu: ndege y = SAKAFU_Y. Rudisha t au -1.0 kama hakuna makutano
+// (mwale sambamba na sakafu, au sakafu iko nyuma ya mwale).
+D64 sakafu_y() { rudisha 0.0 - 1.0; }
+D64 sakafu_gonga(Mwale m) {
+    D64 dy = m.mwelekeo.y;
+    kama (dy < 0.000001 && dy > 0.0 - 0.000001) { rudisha 0.0 - 1.0; }
+    D64 t = (sakafu_y() - m.asili.y) / dy;
+    kama (t > 0.001) { rudisha t; }
+    rudisha 0.0 - 1.0;
+}
+
+// Rangi ya sakafu kwenye nukta p: ubao wa chesi (nyeupe/kijivu).
+// Tunaongeza 1000.0 ili thamani zibaki chanya (N32 hukata kuelekea sifuri).
+Vekta sakafu_rangi(Vekta p) {
+    N32 ix = p.x + 1000.0;
+    N32 iz = p.z + 1000.0;
+    N32 hesabu = ix + iz;
+    kama ((hesabu % 2) == 0) { rudisha vekta_mpya(0.9, 0.9, 0.9); }
+    rudisha vekta_mpya(0.35, 0.35, 0.4);
+}
+
+// Je, nukta p imefichwa kutoka kwenye taa na duara lolote? (kivuli)
+N32 imefichwa(Vekta p, Vekta kuelekea_taa, D64 umbali_taa) {
+    Mwale m = mwale_mpya(p, kuelekea_taa);
+    N32 i = 0;
+    wakati (i < IDADI_DUARA) {
+        Duara d = ulimwengu[i];
+        D64 t = duara_gonga(d, m);
+        kama (t > 0.0 && t < umbali_taa) { rudisha 1; }
+        i = i + 1;
+    }
+    rudisha 0;
+}
+
 Vekta fuatilia(Mwale m) {
-    D64 t = mwale_karibu(m);
+    D64 t_duara = mwale_karibu(m);
+    N32 duara_lililogongwa = gonga_kielezo;
+    D64 t_sakafu = sakafu_gonga(m);
+
+    N32 ni_sakafu = 0;
+    D64 t = t_duara;
+    kama (t_sakafu > 0.0 && t_sakafu < 100.0 && (t_duara < 0.0 || t_sakafu < t_duara)) {
+        ni_sakafu = 1;
+        t = t_sakafu;
+    }
     kama (t < 0.0) { rudisha anga(m); }
 
-    Duara d = ulimwengu[gonga_kielezo];
     Vekta p = mwale_nukta(m, t);
-    Vekta n = duara_kawaida(d, p);
-    Vekta kuelekea_taa = vekta_sawazisha(vekta_toa(nuru, p));
+    Vekta n = vekta_mpya(0.0, 1.0, 0.0);
+    Vekta rangi_msingi = vekta_mpya(0.0, 0.0, 0.0);
+    // KUMBUKA: hatutumii "sivyo" hapa -- mkusanyaji wa Swa kwa sasa hushindwa
+    // ("bafa ya miundo ya wito imejaa") wito unaopitisha miundo kwa thamani
+    // ukiwa ndani ya "sivyo". Vitalu viwili vya "kama" vinafanya kazi ile ile.
+    kama (ni_sakafu == 1) {
+        rangi_msingi = sakafu_rangi(p);
+    }
+    kama (ni_sakafu == 0) {
+        Duara d = ulimwengu[duara_lililogongwa];
+        n = duara_kawaida(d, p);
+        rangi_msingi = d.rangi;
+    }
+
+    Vekta kuelekea_taa = vekta_toa(nuru, p);
+    D64 umbali_taa = vekta_urefu(kuelekea_taa);
+    kuelekea_taa = vekta_sawazisha(kuelekea_taa);
     D64 mwanga = vekta_nukta(n, kuelekea_taa);
     kama (mwanga < 0.0) { mwanga = 0.0; }
+    // Kivuli: mwale unaanzia juu kidogo ya uso (kando ya kawaida) ili
+    // usigonge uso wake wenyewe ("shadow acne").
+    Vekta mwanzo_kivuli = vekta_jumlisha(p, vekta_zidisha(n, 0.002));
+    kama (imefichwa(mwanzo_kivuli, kuelekea_taa, umbali_taa) == 1) { mwanga = 0.0; }
+
     // mwanga wa mazingira 0.15 + diffuse 0.85
-    rudisha vekta_zidisha(d.rangi, 0.15 + (0.85 * mwanga));
+    Vekta rangi = vekta_zidisha(rangi_msingi, 0.15 + (0.85 * mwanga));
+
+    // Ukungu: sakafu ya mbali huchanganyika na anga (huficha upeo wa macho)
+    kama (ni_sakafu == 1) {
+        D64 f = t / 100.0;
+        rangi = vekta_jumlisha(vekta_zidisha(rangi, 1.0 - f), vekta_zidisha(anga(m), f));
+    }
+    rudisha rangi;
 }
 
 N32 baiti_ya_rangi(D64 c) {
