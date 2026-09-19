@@ -1,0 +1,32 @@
+name: CI
+
+# Majaribio yote (vekta, jiometri, mandhari, picha nzima, mstari-wa-amri)
+# dhidi ya mkusanyaji wa Swa wa toleo la sasa la lugha-swa/swa (main).
+# Mnyororo wa kujenga mkusanyaji unahitaji bash na cmp tu -- hakuna lugha
+# nyingine.
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "43 5 * * 1"   # kila Jumatatu: gundua mapema kama mkusanyaji umevunja kitu
+
+jobs:
+  majaribio:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pata mkusanyaji wa Swa
+        run: git clone --depth 1 https://github.com/lugha-swa/swa.git "$RUNNER_TEMP/swa"
+
+      - name: Toleo la mkusanyaji
+        run: git -C "$RUNNER_TEMP/swa" log -1 --format='lugha-swa/swa @ %h (%cd)' --date=short
+
+      - name: Majaribio yote
+        run: SWA_DIR="$RUNNER_TEMP/swa" ./jaribu.sh
+
+      - name: Chora picha ya mfano na ukague ukubwa
+        run: |
+          SWA_DIR="$RUNNER_TEMP/swa" ./jenga.sh miale.swa .jenga/miale
+          .jenga/miale 400 300 2 .jenga/mfano.ppm
+          test "$(stat -c%s .jenga/mfano.ppm)" = 360015
