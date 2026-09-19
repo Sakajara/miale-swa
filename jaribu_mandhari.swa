@@ -1,0 +1,112 @@
+husisha { mandhari.swa }
+
+// Jaribio la mandhari: vivuli, makutano ya sakafu, na ufuatiliaji wa mwale.
+// Jiometri yote imekokotolewa kwa mkono (taa nuru=(-3,5,-0.5), sakafu y=-1,
+// duara nyekundu kituo (-1.2,0,-4) r=1).
+
+N32 karibu(D64 a, D64 b, D64 kosa) {
+    D64 d = a - b;
+    kama (d < 0.0) { d = 0.0 - d; }
+    kama (d < kosa) { rudisha 1; }
+    rudisha 0;
+}
+
+// Je, nukta p imefichwa kutoka kwenye taa? (kwa kutumia nuru ya kimataifa)
+N32 kivuli_cha(Vekta p) {
+    Vekta kwa_taa = vekta_toa(nuru, p);
+    D64 umbali = vekta_urefu(kwa_taa);
+    kwa_taa = vekta_sawazisha(kwa_taa);
+    rudisha imefichwa(p, kwa_taa, umbali);
+}
+
+N32 main() {
+    jenga_ulimwengu();
+
+    // 1. Katikati ya kivuli cha duara jekundu kwenye sakafu: mstari kutoka taa
+    //    kupitia kituo (-1.2,0,-4) hufika y=-1 kwa s=1.2 => (-0.84,-1,-4.7)
+    Vekta kati_ya_kivuli = vekta_mpya(0.0 - 0.84, 0.0 - 0.998, 0.0 - 4.7);
+    kama (kivuli_cha(kati_ya_kivuli) != 1) { rudisha 1; }
+
+    // 2. Sakafu wazi (hakuna duara kati yake na taa): hakuna kivuli
+    Vekta wazi = vekta_mpya(3.0, 0.0 - 0.998, 0.0 - 1.0);
+    kama (kivuli_cha(wazi) != 0) { rudisha 2; }
+
+    // 3. Uso wa duara jekundu upande wa taa: hakuna kivuli
+    Duara nyekundu = ulimwengu[0];
+    Vekta kuelekea = vekta_sawazisha(vekta_toa(nuru, nyekundu.kituo));
+    Vekta upande_wa_taa = vekta_jumlisha(nyekundu.kituo, vekta_zidisha(kuelekea, 1.002));
+    kama (kivuli_cha(upande_wa_taa) != 0) { rudisha 3; }
+
+    // 4. Uso wa duara jekundu upande wa nyuma (mbali na taa): duara lenyewe
+    //    linazuia mwanga => kivuli
+    Vekta upande_wa_nyuma = vekta_jumlisha(nyekundu.kituo, vekta_zidisha(kuelekea, 0.0 - 1.002));
+    kama (kivuli_cha(upande_wa_nyuma) != 1) { rudisha 4; }
+
+    // 5. Sakafu: mwale kutoka (0,0,1) kwenda chini moja kwa moja => t = 1;
+    //    kwenda juu => hakuna; sambamba na sakafu => hakuna
+    Mwale chini = mwale_mpya(vekta_mpya(0.0, 0.0, 1.0), vekta_mpya(0.0, 0.0 - 1.0, 0.0));
+    kama (karibu(sakafu_gonga(chini), 1.0, 0.0001) == 0) { rudisha 5; }
+    Mwale juu = mwale_mpya(vekta_mpya(0.0, 0.0, 1.0), vekta_mpya(0.0, 1.0, 0.0));
+    kama (sakafu_gonga(juu) > 0.0) { rudisha 6; }
+    Mwale sambamba = mwale_mpya(vekta_mpya(0.0, 0.0, 1.0), vekta_mpya(0.0, 0.0, 0.0 - 1.0));
+    kama (sakafu_gonga(sambamba) > 0.0) { rudisha 7; }
+
+    // 6. Duara la karibu zaidi: mwale kutoka (0,-0.65,3) kwenda -z hugonga
+    //    duara la buluu (kielezo 2, kituo (0.1,-0.65,-2.2) r=0.35) kwanza:
+    //    t = 5.2 - sqrt(0.35^2 - 0.1^2) = 5.2 - 0.33541 = 4.86459
+    Mwale kwenda_buluu = mwale_mpya(vekta_mpya(0.0, 0.0 - 0.65, 3.0), vekta_mpya(0.0, 0.0, 0.0 - 1.0));
+    D64 t = mwale_karibu(kwenda_buluu);
+    kama (karibu(t, 4.86459, 0.001) == 0) { rudisha 8; }
+    kama (gonga_kielezo != 2) { rudisha 9; }
+
+    // 7. Anga: mwale wa juu kabisa hauna duara wala sakafu => rangi ya anga
+    //    (buluu kubwa kuliko nyekundu)
+    Vekta jicho = vekta_mpya(0.0, 0.0, 1.0);
+    Vekta c_anga = fuatilia(mwale_mpya(jicho, vekta_mpya(0.0, 1.0, 0.0)));
+    kama (c_anga.z < c_anga.x + 0.1) { rudisha 10; }
+
+    // 8. Duara jekundu: rangi yake ni nyekundu (x = 4.5 * y, kwa rangi
+    //    (0.9,0.2,0.2) kabla ya kupunguzwa kwa mwanga) -- angalia x > 3*y
+    Vekta kwa_nyekundu = vekta_sawazisha(vekta_toa(nyekundu.kituo, jicho));
+    Vekta c_nyekundu = fuatilia(mwale_mpya(jicho, kwa_nyekundu));
+    kama (c_nyekundu.x < 3.0 * c_nyekundu.y) { rudisha 11; }
+    kama (c_nyekundu.x < 0.1) { rudisha 12; }
+
+    // 9. Kivuli kinaonekana kwenye picha: nukta ya sakafu iliyo kwenye kivuli
+    //    (-0.84,-1,-4.7) ni nyeusi zaidi (< nusu) kuliko nukta ya sakafu
+    //    wazi (2.5,-1,-1.5) -- zote mbili kwenye vigae vya rangi nyepesi
+    //    (ubao wa chesi: (999+995) na (1002+998) ni namba shufwa).
+    Vekta a1 = vekta_mpya(1.5, 0.0 - 0.5, 0.0 - 4.7);
+    Vekta lengo1 = vekta_mpya(0.0 - 0.84, 0.0 - 1.0, 0.0 - 4.7);
+    Vekta c_kivuli = fuatilia(mwale_mpya(a1, vekta_sawazisha(vekta_toa(lengo1, a1))));
+    Vekta a2 = vekta_mpya(2.5, 3.0, 0.0 - 1.5);
+    Vekta c_wazi = fuatilia(mwale_mpya(a2, vekta_mpya(0.0, 0.0 - 1.0, 0.0)));
+    kama (c_wazi.x < 0.5) { rudisha 13; }
+    kama (c_kivuli.x > 0.5 * c_wazi.x) { rudisha 14; }
+
+    // 10. Uangazaji wa diffuse: ncha ya duara jekundu inayoelekea taa moja
+    //     kwa moja (n.L = 1) ina rangi ya msingi kamili (0.9,0.2,0.2).
+    //     Ncha ya kinyume iko kwenye kivuli cha duara lenyewe (kwa duara
+    //     lolote, uso wa nyuma daima hujizuia mwanga) => mwanga wa mazingira
+    //     tu: 0.15 * 0.9 = 0.135. Asili za miale ziko nje ya duara kwa 0.15
+    //     na juu ya sakafu (y > -1).
+    Vekta asili_taa = vekta_jumlisha(nyekundu.kituo, vekta_zidisha(kuelekea, 1.15));
+    Vekta c_taa = fuatilia(mwale_mpya(asili_taa, vekta_zidisha(kuelekea, 0.0 - 1.0)));
+    kama (karibu(c_taa.x, 0.9, 0.01) == 0) { rudisha 15; }
+    kama (karibu(c_taa.y, 0.2, 0.01) == 0) { rudisha 16; }
+    Vekta asili_giza = vekta_jumlisha(nyekundu.kituo, vekta_zidisha(kuelekea, 0.0 - 1.15));
+    Vekta c_giza = fuatilia(mwale_mpya(asili_giza, kuelekea));
+    kama (karibu(c_giza.x, 0.135, 0.01) == 0) { rudisha 17; }
+    kama (karibu(c_giza.y, 0.03, 0.01) == 0) { rudisha 18; }
+
+    // 11. Pembe ya kati (hapa ndipo diffuse inapotenganishwa na kivuli):
+    //     kilele cha duara jekundu p=(-1.2,1,-4), kawaida n=(0,1,0).
+    //     Mwelekeo wa taa ni (-1.8,4,3.5)/5.6116 => n.L = 4/5.6116 = 0.71281.
+    //     Rangi = msingi * (0.15 + 0.85*0.71281) = msingi * 0.75589
+    //     => x = 0.9*0.75589 = 0.68030, y = 0.2*0.75589 = 0.15118.
+    Vekta juu_ya_duara = vekta_mpya(0.0 - 1.2, 2.0, 0.0 - 4.0);
+    Vekta c_kilele = fuatilia(mwale_mpya(juu_ya_duara, vekta_mpya(0.0, 0.0 - 1.0, 0.0)));
+    kama (karibu(c_kilele.x, 0.6803, 0.005) == 0) { rudisha 19; }
+    kama (karibu(c_kilele.y, 0.1512, 0.005) == 0) { rudisha 20; }
+    rudisha 0;
+}

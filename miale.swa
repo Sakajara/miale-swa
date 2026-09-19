@@ -1,155 +1,16 @@
-husisha { jiometri.swa }
+husisha { mandhari.swa }
 husisha { kumbukumbu.swa }
 husisha { mfuatano.swa }
 husisha { faili.swa }
 
 // miale.swa -- Kifuatilia-miale (raytracer) kwa Swa safi.
-// Huchora duara tatu zenye rangi tofauti kwenye sakafu ya ubao wa chesi,
-// zikiangazwa na taa moja (mwanga wa "diffuse" pamoja na vivuli), na
-// kuandika picha kwenye miale.ppm.
+// Huchora mandhari (angalia mandhari.swa: duara tatu kwenye sakafu ya
+// ubao wa chesi, taa moja, vivuli) kwa antialiasing ya SAMPULI x SAMPULI,
+// na kuandika picha kwenye miale.ppm.
 
 N32 UPANA = 400;
 N32 UREFU = 300;
-N32 IDADI_DUARA = 3;
 N32 SAMPULI = 2;      // sampuli SAMPULI x SAMPULI kwa kila pikseli (antialiasing)
-
-Duara ulimwengu[3];
-Vekta nuru;            // nafasi ya taa
-N32 gonga_kielezo = 0; // kielezo cha duara lililogongwa na mwale_karibu()
-
-W0 jenga_ulimwengu() {
-    ulimwengu[0].kituo = vekta_mpya(0.0 - 1.2, 0.0, 0.0 - 4.0);
-    ulimwengu[0].nusu_kipenyo = 1.0;
-    ulimwengu[0].rangi = vekta_mpya(0.9, 0.2, 0.2);
-
-    ulimwengu[1].kituo = vekta_mpya(1.3, 0.0 - 0.3, 0.0 - 3.2);
-    ulimwengu[1].nusu_kipenyo = 0.7;
-    ulimwengu[1].rangi = vekta_mpya(0.2, 0.8, 0.3);
-
-    ulimwengu[2].kituo = vekta_mpya(0.1, 0.0 - 0.65, 0.0 - 2.2);
-    ulimwengu[2].nusu_kipenyo = 0.35;
-    ulimwengu[2].rangi = vekta_mpya(0.2, 0.4, 0.95);
-
-    nuru = vekta_mpya(0.0 - 3.0, 5.0, 0.0 - 0.5);
-}
-
-// Rangi ya anga: mteremko kutoka nyeupe (chini) hadi buluu hafifu (juu)
-Vekta anga(Mwale m) {
-    D64 t = 0.5 * (m.mwelekeo.y + 1.0);
-    Vekta nyeupe = vekta_mpya(1.0, 1.0, 1.0);
-    Vekta buluu = vekta_mpya(0.5, 0.7, 1.0);
-    rudisha vekta_jumlisha(vekta_zidisha(nyeupe, 1.0 - t), vekta_zidisha(buluu, t));
-}
-
-// Tafuta duara la karibu zaidi lililogongwa na mwale. Rudisha t (au -1.0),
-// na weka kielezo chake kwenye gonga_kielezo.
-D64 mwale_karibu(Mwale m) {
-    D64 bora = 0.0 - 1.0;
-    N32 i = 0;
-    wakati (i < IDADI_DUARA) {
-        Duara d = ulimwengu[i];
-        D64 t = duara_gonga(d, m);
-        kama (t > 0.0 && (bora < 0.0 || t < bora)) {
-            bora = t;
-            gonga_kielezo = i;
-        }
-        i = i + 1;
-    }
-    rudisha bora;
-}
-
-// Sakafu: ndege y = SAKAFU_Y. Rudisha t au -1.0 kama hakuna makutano
-// (mwale sambamba na sakafu, au sakafu iko nyuma ya mwale).
-D64 sakafu_y() { rudisha 0.0 - 1.0; }
-D64 sakafu_gonga(Mwale m) {
-    D64 dy = m.mwelekeo.y;
-    kama (dy < 0.000001 && dy > 0.0 - 0.000001) { rudisha 0.0 - 1.0; }
-    D64 t = (sakafu_y() - m.asili.y) / dy;
-    kama (t > 0.001) { rudisha t; }
-    rudisha 0.0 - 1.0;
-}
-
-// Rangi ya sakafu kwenye nukta p: ubao wa chesi (nyeupe/kijivu).
-// Tunaongeza 1000.0 ili thamani zibaki chanya (N32 hukata kuelekea sifuri).
-Vekta sakafu_rangi(Vekta p) {
-    N32 ix = p.x + 1000.0;
-    N32 iz = p.z + 1000.0;
-    N32 hesabu = ix + iz;
-    kama ((hesabu % 2) == 0) { rudisha vekta_mpya(0.9, 0.9, 0.9); }
-    rudisha vekta_mpya(0.35, 0.35, 0.4);
-}
-
-// Je, nukta p imefichwa kutoka kwenye taa na duara lolote? (kivuli)
-N32 imefichwa(Vekta p, Vekta kuelekea_taa, D64 umbali_taa) {
-    Mwale m = mwale_mpya(p, kuelekea_taa);
-    N32 i = 0;
-    wakati (i < IDADI_DUARA) {
-        Duara d = ulimwengu[i];
-        D64 t = duara_gonga(d, m);
-        kama (t > 0.0 && t < umbali_taa) { rudisha 1; }
-        i = i + 1;
-    }
-    rudisha 0;
-}
-
-Vekta fuatilia(Mwale m) {
-    D64 t_duara = mwale_karibu(m);
-    N32 duara_lililogongwa = gonga_kielezo;
-    D64 t_sakafu = sakafu_gonga(m);
-
-    N32 ni_sakafu = 0;
-    D64 t = t_duara;
-    kama (t_sakafu > 0.0 && t_sakafu < 100.0 && (t_duara < 0.0 || t_sakafu < t_duara)) {
-        ni_sakafu = 1;
-        t = t_sakafu;
-    }
-    kama (t < 0.0) { rudisha anga(m); }
-
-    Vekta p = mwale_nukta(m, t);
-    Vekta n = vekta_mpya(0.0, 1.0, 0.0);
-    Vekta rangi_msingi = vekta_mpya(0.0, 0.0, 0.0);
-    // KUMBUKA: hatutumii "sivyo" hapa -- mkusanyaji wa Swa kwa sasa hushindwa
-    // ("bafa ya miundo ya wito imejaa") wito unaopitisha miundo kwa thamani
-    // ukiwa ndani ya "sivyo". Vitalu viwili vya "kama" vinafanya kazi ile ile.
-    kama (ni_sakafu == 1) {
-        rangi_msingi = sakafu_rangi(p);
-    }
-    kama (ni_sakafu == 0) {
-        Duara d = ulimwengu[duara_lililogongwa];
-        n = duara_kawaida(d, p);
-        rangi_msingi = d.rangi;
-    }
-
-    Vekta kuelekea_taa = vekta_toa(nuru, p);
-    D64 umbali_taa = vekta_urefu(kuelekea_taa);
-    kuelekea_taa = vekta_sawazisha(kuelekea_taa);
-    D64 mwanga = vekta_nukta(n, kuelekea_taa);
-    kama (mwanga < 0.0) { mwanga = 0.0; }
-    // Kivuli: mwale unaanzia juu kidogo ya uso (kando ya kawaida) ili
-    // usigonge uso wake wenyewe ("shadow acne").
-    Vekta mwanzo_kivuli = vekta_jumlisha(p, vekta_zidisha(n, 0.002));
-    kama (imefichwa(mwanzo_kivuli, kuelekea_taa, umbali_taa) == 1) { mwanga = 0.0; }
-
-    // mwanga wa mazingira 0.15 + diffuse 0.85
-    Vekta rangi = vekta_zidisha(rangi_msingi, 0.15 + (0.85 * mwanga));
-
-    // Ukungu: sakafu ya mbali huchanganyika na anga (huficha upeo wa macho)
-    kama (ni_sakafu == 1) {
-        D64 f = t / 100.0;
-        rangi = vekta_jumlisha(vekta_zidisha(rangi, 1.0 - f), vekta_zidisha(anga(m), f));
-    }
-    rudisha rangi;
-}
-
-// Badilisha rangi (0.0-1.0) kuwa baiti 0-255, na marekebisho ya "gamma"
-// 2.0 (mzizi wa mraba) ili mwanga uonekane wa asili kwenye skrini.
-N32 baiti_ya_rangi(D64 c) {
-    kama (c < 0.0) { c = 0.0; }
-    kama (c > 1.0) { c = 1.0; }
-    D64 g = mzizi_hesabu(c);
-    N32 b = g * 255.0;
-    rudisha b;
-}
 
 N32 main() {
     jenga_ulimwengu();
