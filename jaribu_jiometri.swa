@@ -1,0 +1,52 @@
+husisha { jiometri.swa }
+
+N32 karibu(D64 a, D64 b) {
+    D64 d = a - b;
+    kama (d < 0.0) { d = 0.0 - d; }
+    kama (d < 0.0001) { rudisha 1; }
+    rudisha 0;
+}
+
+N32 main() {
+    Duara d;
+    d.kituo = vekta_mpya(0.0, 0.0, -5.0);
+    d.nusu_kipenyo = 1.0;
+    d.rangi = vekta_mpya(1.0, 0.0, 0.0);
+
+    // 1. Mwale moja kwa moja kuelekea duara: makutano ya karibu ni t=4
+    Mwale m1 = mwale_mpya(vekta_mpya(0.0, 0.0, 0.0), vekta_mpya(0.0, 0.0, -1.0));
+    D64 t1 = duara_gonga(d, m1);
+    kama (karibu(t1, 4.0) == 0) { rudisha 1; }
+    Vekta p1 = mwale_nukta(m1, t1);
+    kama (karibu(p1.z, -4.0) == 0) { rudisha 2; }
+    Vekta n1 = duara_kawaida(d, p1);
+    kama (karibu(n1.z, 1.0) == 0 || karibu(n1.x, 0.0) == 0) { rudisha 3; }
+
+    // 2. Mwale unaokosa duara (juu): hakuna makutano
+    Mwale m2 = mwale_mpya(vekta_mpya(0.0, 0.0, 0.0), vekta_mpya(0.0, 1.0, 0.0));
+    kama (duara_gonga(d, m2) > 0.0) { rudisha 4; }
+
+    // 3. Asili ndani ya duara: makutano ya mbali t=1 (kituo 0,0,0 r=1, mwelekeo +x)
+    Duara ndani;
+    ndani.kituo = vekta_mpya(0.0, 0.0, 0.0);
+    ndani.nusu_kipenyo = 1.0;
+    ndani.rangi = vekta_mpya(0.0, 1.0, 0.0);
+    Mwale m3 = mwale_mpya(vekta_mpya(0.0, 0.0, 0.0), vekta_mpya(1.0, 0.0, 0.0));
+    kama (karibu(duara_gonga(ndani, m3), 1.0) == 0) { rudisha 5; }
+
+    // 4. Duara nyuma ya asili: hakuna makutano (t hasi)
+    Mwale m4 = mwale_mpya(vekta_mpya(0.0, 0.0, 0.0), vekta_mpya(0.0, 0.0, 1.0));
+    kama (duara_gonga(d, m4) > 0.0) { rudisha 6; }
+
+    // 5. Duara kubwa zaidi: kituo (0,0,-10), nusu_kipenyo 6 -- uso wa mbele uko z=-4, t=4
+    Duara k;
+    k.kituo = vekta_mpya(0.0, 0.0, -10.0);
+    k.nusu_kipenyo = 6.0;
+    k.rangi = vekta_mpya(0.0, 0.0, 1.0);
+    kama (karibu(duara_gonga(k, m1), 4.0) == 0) { rudisha 7; }
+
+    // 6. Mwelekeo usio wa urefu 1 (a != 1): mwelekeo (0,0,-2), t=2
+    Mwale m6 = mwale_mpya(vekta_mpya(0.0, 0.0, 0.0), vekta_mpya(0.0, 0.0, -2.0));
+    kama (karibu(duara_gonga(d, m6), 2.0) == 0) { rudisha 8; }
+    rudisha 0;
+}

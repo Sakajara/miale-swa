@@ -1,0 +1,43 @@
+husisha { vekta.swa }
+
+// jiometri.swa -- Miale na duara (sphere), pamoja na makutano yao.
+
+muundo Mwale { Vekta asili; Vekta mwelekeo; };
+
+muundo Duara { Vekta kituo; D64 nusu_kipenyo; Vekta rangi; };
+
+Mwale mwale_mpya(Vekta asili, Vekta mwelekeo) {
+    Mwale m;
+    m.asili = asili;
+    m.mwelekeo = mwelekeo;
+    rudisha m;
+}
+
+// Nukta kwenye mwale kwa umbali t: asili + mwelekeo * t
+Vekta mwale_nukta(Mwale m, D64 t) {
+    rudisha vekta_jumlisha(m.asili, vekta_zidisha(m.mwelekeo, t));
+}
+
+// Makutano ya mwale na duara kwa fomula ya kawaida ya quadratic.
+// Rudisha umbali t wa makutano ya karibu zaidi yenye t > epsilon,
+// au -1.0 kama hakuna makutano.
+D64 duara_gonga(Duara d, Mwale m) {
+    D64 epsilon = 0.001;
+    Vekta oc = vekta_toa(m.asili, d.kituo);
+    D64 a = vekta_nukta(m.mwelekeo, m.mwelekeo);
+    D64 h = vekta_nukta(oc, m.mwelekeo);
+    D64 c = vekta_nukta(oc, oc) - (d.nusu_kipenyo * d.nusu_kipenyo);
+    D64 diskriminanti = (h * h) - (a * c);
+    kama (diskriminanti < 0.0) { rudisha 0.0 - 1.0; }
+    D64 mzizi = mzizi_hesabu(diskriminanti);
+    D64 t = ((0.0 - h) - mzizi) / a;
+    kama (t > epsilon) { rudisha t; }
+    t = ((0.0 - h) + mzizi) / a;
+    kama (t > epsilon) { rudisha t; }
+    rudisha 0.0 - 1.0;
+}
+
+// Kawaida (normal) ya uso wa duara kwenye nukta p (urefu 1)
+Vekta duara_kawaida(Duara d, Vekta p) {
+    rudisha vekta_sawazisha(vekta_toa(p, d.kituo));
+}
