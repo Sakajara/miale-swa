@@ -1,0 +1,70 @@
+husisha { mandhari.swa }
+husisha { mfuatano.swa }
+
+// kifuatilia.swa -- kiini cha kifuatilia-miale: huchora mandhari (angalia
+// mandhari.swa) kwenye bafa ya kumbukumbu kama picha ya PPM (P6). Haina
+// main() wala uandishi wa faili, ili ijaribiwe peke yake (jaribu_picha.swa)
+// na itumike na miale.swa (mstari-wa-amri).
+
+// Ukubwa wa juu wa bafa unaohitajika kwa picha ya upana x urefu: kichwa cha
+// PPM ("P6\n<upana> <urefu>\n255\n", chini ya baiti 32) + baiti 3 kwa pikseli.
+N64 chora_ukubwa(N32 upana, N32 urefu) {
+    N64 u = upana;
+    N64 r = urefu;
+    rudisha 32 + (u * r * 3);
+}
+
+// Chora picha kwenye `picha` (lazima iwe na angalau chora_ukubwa() baiti).
+// Kila pikseli ni wastani wa sampuli x sampuli miale (antialiasing).
+// Inarudisha idadi ya baiti zilizoandikwa (kichwa + pikseli), au 0 kama
+// upana, urefu au sampuli ni chini ya 1. Uandishi kamwe haupiti
+// chora_ukubwa(upana, urefu).
+N64 chora_picha(N8* picha, N32 upana, N32 urefu, N32 sampuli) {
+    kama (upana < 1 || urefu < 1 || sampuli < 1) { rudisha 0; }
+    jenga_ulimwengu();
+    N64 kichwa = mfuatano_umbiza(picha, 32, "P6\n%d %d\n255\n", upana, urefu, 0, 0, 0, 0);
+
+    Vekta jicho = vekta_mpya(0.0, 0.0, 1.0);
+    D64 upana_d = upana;
+    D64 urefu_d = urefu;
+    D64 uwiano = upana_d / urefu_d;
+    D64 kipimo = 0.75;   // tan(nusu ya pembe ya kuona)
+    D64 sampuli_d = sampuli;
+
+    N64 wapi = kichwa;
+    N32 j = 0;
+    wakati (j < urefu) {
+        N32 i = 0;
+        wakati (i < upana) {
+            // Antialiasing: wastani wa sampuli x sampuli miale ndani ya pikseli
+            Vekta jumla = vekta_mpya(0.0, 0.0, 0.0);
+            N32 sj = 0;
+            wakati (sj < sampuli) {
+                N32 si = 0;
+                wakati (si < sampuli) {
+                    D64 id = i;
+                    D64 jd = j;
+                    D64 sid = si;
+                    D64 sjd = sj;
+                    D64 px = id + ((sid + 0.5) / sampuli_d);
+                    D64 py = jd + ((sjd + 0.5) / sampuli_d);
+                    D64 u = (((2.0 * px) / upana_d) - 1.0) * uwiano * kipimo;
+                    D64 v = (1.0 - ((2.0 * py) / urefu_d)) * kipimo;
+                    Vekta mwelekeo = vekta_sawazisha(vekta_mpya(u, v, 0.0 - 1.0));
+                    Vekta c = fuatilia(mwale_mpya(jicho, mwelekeo));
+                    jumla = vekta_jumlisha(jumla, c);
+                    si = si + 1;
+                }
+                sj = sj + 1;
+            }
+            Vekta rangi = vekta_zidisha(jumla, 1.0 / (sampuli_d * sampuli_d));
+            picha[wapi] = baiti_ya_rangi(rangi.x);
+            picha[wapi + 1] = baiti_ya_rangi(rangi.y);
+            picha[wapi + 2] = baiti_ya_rangi(rangi.z);
+            wapi = wapi + 3;
+            i = i + 1;
+        }
+        j = j + 1;
+    }
+    rudisha wapi;
+}

@@ -1,70 +1,81 @@
-husisha { mandhari.swa }
+husisha { kifuatilia.swa }
 husisha { kumbukumbu.swa }
 husisha { mfuatano.swa }
 husisha { faili.swa }
 
-// miale.swa -- Kifuatilia-miale (raytracer) kwa Swa safi.
-// Huchora mandhari (angalia mandhari.swa: duara tatu kwenye sakafu ya
-// ubao wa chesi, taa moja, vivuli) kwa antialiasing ya SAMPULI x SAMPULI,
-// na kuandika picha kwenye miale.ppm.
+// miale.swa -- Kifuatilia-miale (raytracer) kwa Swa safi: programu ya
+// mstari-wa-amri. Kiini cha uchoraji kiko kwenye kifuatilia.swa.
+//
+// Matumizi:
+//   miale                              -> 400x300, sampuli 2x2, miale.ppm
+//   miale <upana> <urefu>              -> ukubwa mwingine
+//   miale <upana> <urefu> <sampuli>    -> antialiasing SAMPULI x SAMPULI (1..8)
+//   miale <upana> <urefu> <sampuli> <faili.ppm>
+//
+// Upana na urefu: 1..4096. Msimbo wa kutoka: 0 = sawa, 1 = kosa la
+// kuandika faili au kumbukumbu, 2 = hoja zisizo sahihi.
 
-N32 UPANA = 400;
-N32 UREFU = 300;
-N32 SAMPULI = 2;      // sampuli SAMPULI x SAMPULI kwa kila pikseli (antialiasing)
+N32 UPANA_CHAGUO_MSINGI = 400;
+N32 UREFU_CHAGUO_MSINGI = 300;
+N32 SAMPULI_CHAGUO_MSINGI = 2;
+N32 KIKOMO_KIPIMO = 4096;
+N32 KIKOMO_SAMPULI = 8;
 
-N32 main() {
-    jenga_ulimwengu();
-    N64 uwezo = (UPANA * UREFU * 3) + 64;
-    N8* picha = tenga(uwezo);
-    N64 kichwa = mfuatano_umbiza(picha, 64, "P6\n%d %d\n255\n", UPANA, UREFU, 0, 0, 0, 0);
-
-    Vekta jicho = vekta_mpya(0.0, 0.0, 1.0);
-    D64 upana_d = UPANA;
-    D64 urefu_d = UREFU;
-    D64 uwiano = upana_d / urefu_d;
-    D64 kipimo = 0.75;   // tan(nusu ya pembe ya kuona)
-
-    N64 wapi = kichwa;
-    N32 j = 0;
-    wakati (j < UREFU) {
-        N32 i = 0;
-        wakati (i < UPANA) {
-            // Antialiasing: wastani wa SAMPULI x SAMPULI miale ndani ya pikseli
-            Vekta jumla = vekta_mpya(0.0, 0.0, 0.0);
-            D64 sampuli_d = SAMPULI;
-            N32 sj = 0;
-            wakati (sj < SAMPULI) {
-                N32 si = 0;
-                wakati (si < SAMPULI) {
-                    D64 id = i;
-                    D64 jd = j;
-                    D64 sid = si;
-                    D64 sjd = sj;
-                    D64 px = id + ((sid + 0.5) / sampuli_d);
-                    D64 py = jd + ((sjd + 0.5) / sampuli_d);
-                    D64 u = (((2.0 * px) / upana_d) - 1.0) * uwiano * kipimo;
-                    D64 v = (1.0 - ((2.0 * py) / urefu_d)) * kipimo;
-                    Vekta mwelekeo = vekta_sawazisha(vekta_mpya(u, v, 0.0 - 1.0));
-                    Vekta c = fuatilia(mwale_mpya(jicho, mwelekeo));
-                    jumla = vekta_jumlisha(jumla, c);
-                    si = si + 1;
-                }
-                sj = sj + 1;
-            }
-            Vekta rangi = vekta_zidisha(jumla, 1.0 / (sampuli_d * sampuli_d));
-            picha[wapi] = baiti_ya_rangi(rangi.x);
-            picha[wapi + 1] = baiti_ya_rangi(rangi.y);
-            picha[wapi + 2] = baiti_ya_rangi(rangi.z);
-            wapi = wapi + 3;
-            i = i + 1;
-        }
-        j = j + 1;
+// Soma nambari kamili chanya kutoka `s` (tarakimu 1..9 tu). Inarudisha -1
+// kama `s` si nambari kamili.
+N32 soma_hoja(N8* s) {
+    N32 n = urefu_wa_mfuatano(s);
+    kama (n < 1 || n > 9) { rudisha 0 - 1; }
+    N32 i = 0;
+    wakati (i < n) {
+        N32 c = s[i] & 255;
+        kama (c < 48 || c > 57) { rudisha 0 - 1; }
+        i = i + 1;
     }
+    rudisha mfuatano_hadi_n32(s);
+}
 
-    kama (faili_andika_yote("miale.ppm", picha, wapi) != 0) {
-        andika("kosa: imeshindwa kuandika miale.ppm\n", 0, 0, 0, 0, 0, 0);
+W0 onyesha_matumizi() {
+    andika_stderr("matumizi: miale [upana urefu [sampuli [faili.ppm]]]\n", 0, 0, 0, 0, 0, 0);
+    andika_stderr("  upana, urefu: 1..%d   sampuli: 1..%d\n", KIKOMO_KIPIMO, KIKOMO_SAMPULI, 0, 0, 0, 0);
+}
+
+N32 main(N32 argc, N8** argv) {
+    N32 upana = UPANA_CHAGUO_MSINGI;
+    N32 urefu = UREFU_CHAGUO_MSINGI;
+    N32 sampuli = SAMPULI_CHAGUO_MSINGI;
+    N8* towe = "miale.ppm";
+
+    kama (argc == 2 || argc > 5) { onyesha_matumizi(); rudisha 2; }
+    kama (argc >= 3) {
+        upana = soma_hoja(argv[1]);
+        urefu = soma_hoja(argv[2]);
+        kama (upana < 1 || upana > KIKOMO_KIPIMO || urefu < 1 || urefu > KIKOMO_KIPIMO) {
+            andika_stderr("kosa: upana na urefu lazima viwe nambari kati ya 1 na %d\n", KIKOMO_KIPIMO, 0, 0, 0, 0, 0);
+            onyesha_matumizi();
+            rudisha 2;
+        }
+    }
+    kama (argc >= 4) {
+        sampuli = soma_hoja(argv[3]);
+        kama (sampuli < 1 || sampuli > KIKOMO_SAMPULI) {
+            andika_stderr("kosa: sampuli lazima iwe kati ya 1 na %d\n", KIKOMO_SAMPULI, 0, 0, 0, 0, 0);
+            onyesha_matumizi();
+            rudisha 2;
+        }
+    }
+    kama (argc >= 5) { towe = argv[4]; }
+
+    N8* picha = tenga(chora_ukubwa(upana, urefu));
+    kama (picha == 0) {
+        andika_stderr("kosa: kumbukumbu imeisha (picha %d x %d)\n", upana, urefu, 0, 0, 0, 0);
         rudisha 1;
     }
-    andika("miale.ppm imeandikwa (%d x %d)\n", UPANA, UREFU, 0, 0, 0, 0);
+    N64 urefu_wa_faili = chora_picha(picha, upana, urefu, sampuli);
+    kama (faili_andika_yote(towe, picha, urefu_wa_faili) != 0) {
+        andika_stderr("kosa: imeshindwa kuandika %s\n", towe, 0, 0, 0, 0, 0);
+        rudisha 1;
+    }
+    andika("%s imeandikwa (%d x %d, sampuli %d)\n", towe, upana, urefu, sampuli, 0, 0);
     rudisha 0;
 }
