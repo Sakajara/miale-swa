@@ -11,6 +11,7 @@ husisha { faili.swa }
 N32 UPANA = 400;
 N32 UREFU = 300;
 N32 IDADI_DUARA = 3;
+N32 SAMPULI = 2;      // sampuli SAMPULI x SAMPULI kwa kila pikseli (antialiasing)
 
 Duara ulimwengu[3];
 Vekta nuru;            // nafasi ya taa
@@ -140,10 +141,13 @@ Vekta fuatilia(Mwale m) {
     rudisha rangi;
 }
 
+// Badilisha rangi (0.0-1.0) kuwa baiti 0-255, na marekebisho ya "gamma"
+// 2.0 (mzizi wa mraba) ili mwanga uonekane wa asili kwenye skrini.
 N32 baiti_ya_rangi(D64 c) {
     kama (c < 0.0) { c = 0.0; }
     kama (c > 1.0) { c = 1.0; }
-    N32 b = c * 255.0;
+    D64 g = mzizi_hesabu(c);
+    N32 b = g * 255.0;
     rudisha b;
 }
 
@@ -164,12 +168,29 @@ N32 main() {
     wakati (j < UREFU) {
         N32 i = 0;
         wakati (i < UPANA) {
-            D64 id = i;
-            D64 jd = j;
-            D64 u = (((2.0 * (id + 0.5)) / upana_d) - 1.0) * uwiano * kipimo;
-            D64 v = (1.0 - ((2.0 * (jd + 0.5)) / urefu_d)) * kipimo;
-            Vekta mwelekeo = vekta_sawazisha(vekta_mpya(u, v, 0.0 - 1.0));
-            Vekta rangi = fuatilia(mwale_mpya(jicho, mwelekeo));
+            // Antialiasing: wastani wa SAMPULI x SAMPULI miale ndani ya pikseli
+            Vekta jumla = vekta_mpya(0.0, 0.0, 0.0);
+            D64 sampuli_d = SAMPULI;
+            N32 sj = 0;
+            wakati (sj < SAMPULI) {
+                N32 si = 0;
+                wakati (si < SAMPULI) {
+                    D64 id = i;
+                    D64 jd = j;
+                    D64 sid = si;
+                    D64 sjd = sj;
+                    D64 px = id + ((sid + 0.5) / sampuli_d);
+                    D64 py = jd + ((sjd + 0.5) / sampuli_d);
+                    D64 u = (((2.0 * px) / upana_d) - 1.0) * uwiano * kipimo;
+                    D64 v = (1.0 - ((2.0 * py) / urefu_d)) * kipimo;
+                    Vekta mwelekeo = vekta_sawazisha(vekta_mpya(u, v, 0.0 - 1.0));
+                    Vekta c = fuatilia(mwale_mpya(jicho, mwelekeo));
+                    jumla = vekta_jumlisha(jumla, c);
+                    si = si + 1;
+                }
+                sj = sj + 1;
+            }
+            Vekta rangi = vekta_zidisha(jumla, 1.0 / (sampuli_d * sampuli_d));
             picha[wapi] = baiti_ya_rangi(rangi.x);
             picha[wapi + 1] = baiti_ya_rangi(rangi.y);
             picha[wapi + 2] = baiti_ya_rangi(rangi.z);
