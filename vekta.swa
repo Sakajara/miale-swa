@@ -1,0 +1,47 @@
+husisha { hesabu.swa }
+
+// vekta.swa -- Vekta ya vipimo vitatu (D64) na shughuli zake.
+// Msingi wa kifuatilia-miale: kila nukta, mwelekeo na rangi ni Vekta.
+
+muundo Vekta { D64 x; D64 y; D64 z; };
+
+Vekta vekta_mpya(D64 x, D64 y, D64 z) {
+    Vekta v;
+    v.x = x;
+    v.y = y;
+    v.z = z;
+    rudisha v;
+}
+
+Vekta vekta_jumlisha(Vekta a, Vekta b) {
+    rudisha vekta_mpya(a.x + b.x, a.y + b.y, a.z + b.z);
+}
+
+Vekta vekta_toa(Vekta a, Vekta b) {
+    rudisha vekta_mpya(a.x - b.x, a.y - b.y, a.z - b.z);
+}
+
+Vekta vekta_zidisha(Vekta a, D64 k) {
+    rudisha vekta_mpya(a.x * k, a.y * k, a.z * k);
+}
+
+D64 vekta_nukta(Vekta a, Vekta b) {
+    rudisha (a.x * b.x) + (a.y * b.y) + (a.z * b.z);
+}
+
+Vekta vekta_msalaba(Vekta a, Vekta b) {
+    rudisha vekta_mpya(
+        (a.y * b.z) - (a.z * b.y),
+        (a.z * b.x) - (a.x * b.z),
+        (a.x * b.y) - (a.y * b.x));
+}
+
+D64 vekta_urefu(Vekta a) {
+    rudisha mzizi_hesabu(vekta_nukta(a, a));
+}
+
+Vekta vekta_sawazisha(Vekta a) {
+    D64 u = vekta_urefu(a);
+    kama (u <= 0.0) { rudisha a; }
+    rudisha vekta_zidisha(a, 1.0 / u);
+}

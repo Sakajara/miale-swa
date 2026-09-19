@@ -1,0 +1,29 @@
+husisha { vekta.swa }
+
+// Jaribio la vekta: thamani zilizokokotolewa kwa mkono.
+N32 karibu(D64 a, D64 b) {
+    D64 d = a - b;
+    kama (d < 0.0) { d = 0.0 - d; }
+    kama (d < 0.0001) { rudisha 1; }
+    rudisha 0;
+}
+
+N32 main() {
+    Vekta a = vekta_mpya(1.0, 2.0, 3.0);
+    Vekta b = vekta_mpya(4.0, 5.0, 6.0);
+    Vekta s = vekta_jumlisha(a, b);
+    kama (karibu(s.x, 5.0) == 0 || karibu(s.y, 7.0) == 0 || karibu(s.z, 9.0) == 0) { rudisha 1; }
+    Vekta t = vekta_toa(b, a);
+    kama (karibu(t.x, 3.0) == 0 || karibu(t.y, 3.0) == 0 || karibu(t.z, 3.0) == 0) { rudisha 2; }
+    Vekta z = vekta_zidisha(a, 2.0);
+    kama (karibu(z.z, 6.0) == 0) { rudisha 3; }
+    kama (karibu(vekta_nukta(a, b), 32.0) == 0) { rudisha 4; }
+    Vekta m = vekta_msalaba(a, b);
+    kama (karibu(m.x, -3.0 + 0.0) == 0) { rudisha 5; }
+    kama (karibu(m.y, 6.0) == 0 || karibu(m.z, -3.0) == 0) { rudisha 6; }
+    Vekta p = vekta_mpya(3.0, 4.0, 0.0);
+    kama (karibu(vekta_urefu(p), 5.0) == 0) { rudisha 7; }
+    Vekta n = vekta_sawazisha(p);
+    kama (karibu(n.x, 0.6) == 0 || karibu(n.y, 0.8) == 0) { rudisha 8; }
+    rudisha 0;
+}
