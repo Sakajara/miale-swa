@@ -1,0 +1,196 @@
+husisha { kifuatilia.swa }
+husisha { kumbukumbu.swa }
+husisha { mfuatano.swa }
+
+// jaribu_picha.swa -- ukaguzi wa picha nzima kwa Swa safi (unachukua nafasi
+// ya script ya shell iliyotumia od/sort/sed): tunachora kwenye kumbukumbu
+// kupitia chora_picha() na kukagua:
+//   1. muundo wa PPM (kichwa, ukubwa) kwa vipimo tofauti
+//   2. bafa haipitwi (canary baada ya mwisho wa bafa haiguswi)
+//   3. rangi za pikseli maalum (anga, duara tatu, sakafu) -- mipaka ya rangi
+//      inayotokana na rangi za vitu vya mandhari
+//   4. picha si tupu wala rangi moja
+//   5. uamuzi: kuchora mara mbili kunatoa baiti zile zile
+//   6. "golden": hash ya picha nzima ya 400x300 imefungwa -- badiliko lolote
+//      la matokeo ya kuchora (jiometri, mwanga, hesabu ya D64, mkusanyaji)
+//      litaonekana hapa; ukibadilisha mandhari kwa makusudi, sasisha
+//      GOLDEN_HASH (thamani mpya inaonyeshwa wakati wa kushindwa).
+
+N64 GOLDEN_HASH = 2277982281;   // hash ya 400x300, sampuli 2 (angalia hash_picha)
+N32 CANARY = 170;               // 0xAA
+
+N32 jaribio_jumla = 0;
+N32 jaribio_kosa = 0;
+
+W0 thibitisha(N32 sharti, N8* jina) {
+    jaribio_jumla = jaribio_jumla + 1;
+    kama (sharti == 0) {
+        jaribio_kosa = jaribio_kosa + 1;
+        andika("SHINDWA: %s\n", jina, 0, 0, 0, 0, 0);
+    }
+}
+
+W0 thibitisha_n64(N64 halisi, N64 tarajiwa, N8* jina) {
+    jaribio_jumla = jaribio_jumla + 1;
+    kama (halisi != tarajiwa) {
+        jaribio_kosa = jaribio_kosa + 1;
+        andika("SHINDWA: %s (halisi=%d, tarajiwa=%d)\n", jina, halisi, tarajiwa, 0, 0, 0);
+    }
+}
+
+// Baiti ya picha kama nambari 0..255.
+N32 baiti(N8* p, N64 i) {
+    rudisha p[i] & 255;
+}
+
+// Hash ya polynomial (mod 2^32) ya baiti `n` -- kigunduzi cha mabadiliko,
+// si hash ya usalama.
+N64 hash_picha(N8* p, N64 n) {
+    N64 h = 2166136261;
+    N64 i = 0;
+    wakati (i < n) {
+        h = ((h * 1000003) + baiti(p, i)) % 4294967296;
+        i = i + 1;
+    }
+    rudisha h;
+}
+
+// Pikseli (x,y) ya picha ya upana `upana`, kichwa cha baiti `kichwa`.
+N32 kituo(N8* p, N64 kichwa, N32 upana, N32 x, N32 y, N32 chaneli) {
+    N64 i = kichwa + ((y * upana + x) * 3) + chaneli;
+    rudisha baiti(p, i);
+}
+
+// Chora kwenye bafa iliyo na canary; rudisha bafa. Inaandika urefu kwenye *n.
+N8* chora_na_canary(N32 upana, N32 urefu, N32 sampuli, N64* n) {
+    N64 uwezo = chora_ukubwa(upana, urefu);
+    N8* p = tenga(uwezo + 16);
+    N64 i = 0;
+    wakati (i < 16) { p[uwezo + i] = CANARY; i = i + 1; }
+    *n = chora_picha(p, upana, urefu, sampuli);
+    rudisha p;
+}
+
+N32 canary_salama(N8* p, N32 upana, N32 urefu) {
+    N64 uwezo = chora_ukubwa(upana, urefu);
+    N64 i = 0;
+    wakati (i < 16) {
+        kama (baiti(p, uwezo + i) != CANARY) { rudisha 0; }
+        i = i + 1;
+    }
+    rudisha 1;
+}
+
+N32 main() {
+    // ---- 1 + 2. Muundo wa PPM na canary kwa vipimo mbalimbali ----
+    N64 n = 0;
+    N8* p = chora_na_canary(8, 6, 1, &n);
+    thibitisha_n64(n, 155, "8x6: urefu = 11 (kichwa) + 8*6*3");
+    thibitisha(linganisha_mfuatano_n(p, "P6\n8 6\n255\n", 11) == 0, "8x6: kichwa cha PPM");
+    thibitisha(canary_salama(p, 8, 6), "8x6: bafa haijapitwa");
+
+    p = chora_na_canary(1, 1, 1, &n);
+    thibitisha_n64(n, 14, "1x1: urefu = 11 + 3");
+    thibitisha(canary_salama(p, 1, 1), "1x1: bafa haijapitwa");
+
+    p = chora_na_canary(4096, 1, 1, &n);
+    thibitisha_n64(n, 12302, "4096x1: urefu = 14 + 4096*3");
+    thibitisha(canary_salama(p, 4096, 1), "4096x1: bafa haijapitwa (kichwa kirefu zaidi)");
+
+    p = chora_na_canary(1, 4096, 1, &n);
+    thibitisha_n64(n, 12302, "1x4096: urefu = 14 + 4096*3");
+    thibitisha(canary_salama(p, 1, 4096), "1x4096: bafa haijapitwa");
+
+    // ---- hoja zisizo sahihi ----
+    N8 dogo[64];
+    thibitisha_n64(chora_picha(dogo, 0, 5, 1), 0, "upana 0 -> 0");
+    thibitisha_n64(chora_picha(dogo, 5, 0, 1), 0, "urefu 0 -> 0");
+    thibitisha_n64(chora_picha(dogo, 5, 5, 0), 0, "sampuli 0 -> 0");
+    thibitisha_n64(chora_picha(dogo, 0 - 3, 5, 1), 0, "upana hasi -> 0");
+
+    // ---- 3. Picha kamili 400x300, sampuli 2 ----
+    N32 U = 400;
+    N32 R = 300;
+    N8* a = chora_na_canary(U, R, 2, &n);
+    thibitisha_n64(n, 360015, "400x300: urefu = 15 + 400*300*3");
+    thibitisha(linganisha_mfuatano_n(a, "P6\n400 300\n255\n", 15) == 0, "400x300: kichwa cha PPM");
+    thibitisha(canary_salama(a, U, R), "400x300: bafa haijapitwa");
+
+    // anga (50,30): buluu-nyeupe
+    N32 r = kituo(a, 15, U, 50, 30, 0);
+    N32 g = kituo(a, 15, U, 50, 30, 1);
+    N32 b = kituo(a, 15, U, 50, 30, 2);
+    thibitisha(b > 240 && b > r, "anga (50,30) ni buluu-nyeupe");
+    // duara jekundu (150,140)
+    r = kituo(a, 15, U, 150, 140, 0);
+    g = kituo(a, 15, U, 150, 140, 1);
+    b = kituo(a, 15, U, 150, 140, 2);
+    thibitisha(r > 150 && g < 110 && b < 110, "duara jekundu (150,140)");
+    // duara kijani (265,165)
+    r = kituo(a, 15, U, 265, 165, 0);
+    g = kituo(a, 15, U, 265, 165, 1);
+    b = kituo(a, 15, U, 265, 165, 2);
+    thibitisha(g > 140 && r < 110, "duara kijani (265,165)");
+    // duara la buluu (205,188)
+    r = kituo(a, 15, U, 205, 188, 0);
+    g = kituo(a, 15, U, 205, 188, 1);
+    b = kituo(a, 15, U, 205, 188, 2);
+    thibitisha(b > 150 && r < 110, "duara la buluu (205,188)");
+    // kigae chenye mwanga cha sakafu (150,280)
+    r = kituo(a, 15, U, 150, 280, 0);
+    g = kituo(a, 15, U, 150, 280, 1);
+    b = kituo(a, 15, U, 150, 280, 2);
+    thibitisha(r > 200 && g > 200 && b > 200, "kigae cha sakafu chenye mwanga (150,280)");
+
+    // ---- 4. Si tupu wala rangi moja: hesabu rangi tofauti kwa bitmap ya 2^24 ----
+    N8* bm = tenga(2097152);
+    weka_sifuri(bm, 2097152);
+    N32 tofauti = 0;
+    N64 pi = 0;
+    wakati (pi < 120000) {
+        N32 rr = kituo(a, 15, U, pi % U, pi / U, 0);
+        N32 gg = kituo(a, 15, U, pi % U, pi / U, 1);
+        N32 bb = kituo(a, 15, U, pi % U, pi / U, 2);
+        N32 ufunguo = (rr * 65536) + (gg * 256) + bb;
+        N32 baiti_i = ufunguo / 8;
+        N32 biti = ufunguo % 8;
+        N32 mask = 1;
+        wakati (biti > 0) { mask = mask * 2; biti = biti - 1; }
+        kama ((bm[baiti_i] & mask) == 0) {
+            bm[baiti_i] = bm[baiti_i] | mask;
+            tofauti = tofauti + 1;
+        }
+        pi = pi + 1;
+    }
+    andika("  rangi tofauti kwenye picha: %d\n", tofauti, 0, 0, 0, 0, 0);
+    thibitisha(tofauti > 1000, "picha si tupu wala rangi moja (rangi tofauti > 1000)");
+
+    // ---- 5. Uamuzi: mara ya pili baiti zile zile ----
+    N64 n2 = 0;
+    N8* a2 = chora_na_canary(U, R, 2, &n2);
+    thibitisha_n64(n2, n, "kuchora mara mbili: urefu ule ule");
+    N32 sawa = 1;
+    N64 k = 0;
+    wakati (k < n && sawa == 1) {
+        kama (baiti(a, k) != baiti(a2, k)) { sawa = 0; }
+        k = k + 1;
+    }
+    thibitisha(sawa, "kuchora mara mbili kunatoa picha sawa baiti kwa baiti");
+
+    // ---- sampuli tofauti: zote zinatoa picha halali ya ukubwa ule ule ----
+    N8* s1 = chora_na_canary(40, 30, 1, &n);
+    thibitisha_n64(n, 13 + (40 * 30 * 3), "40x30 sampuli 1: urefu");
+    thibitisha(canary_salama(s1, 40, 30), "40x30 sampuli 1: bafa haijapitwa");
+    N8* s4 = chora_na_canary(40, 30, 4, &n);
+    thibitisha_n64(n, 13 + (40 * 30 * 3), "40x30 sampuli 4: urefu");
+    thibitisha(canary_salama(s4, 40, 30), "40x30 sampuli 4: bafa haijapitwa");
+
+    // ---- 6. Golden: hash ya picha nzima ----
+    N64 h = hash_picha(a, n2);
+    andika("  hash ya picha 400x300 = %d\n", h, 0, 0, 0, 0, 0);
+    thibitisha_n64(h, GOLDEN_HASH, "golden: hash ya picha 400x300 haijabadilika");
+
+    andika("ukaguzi %d, walioshindwa %d\n", jaribio_jumla, jaribio_kosa, 0, 0, 0, 0);
+    kama (jaribio_kosa > 0) { rudisha 1; }
+    rudisha 0;
+}
