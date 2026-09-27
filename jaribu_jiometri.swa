@@ -1,13 +1,13 @@
 husisha { jiometri.swa }
 
-N32 karibu(D64 a, D64 b) {
-    D64 d = a - b;
+n32 karibu(d64 a, d64 b) {
+    d64 d = a - b;
     kama (d < 0.0) { d = 0.0 - d; }
     kama (d < 0.0001) { rudisha 1; }
     rudisha 0;
 }
 
-N32 main() {
+n32 main() {
     Duara d;
     d.kituo = vekta_mpya(0.0, 0.0, -5.0);
     d.nusu_kipenyo = 1.0;
@@ -15,7 +15,7 @@ N32 main() {
 
     // 1. Mwale moja kwa moja kuelekea duara: makutano ya karibu ni t=4
     Mwale m1 = mwale_mpya(vekta_mpya(0.0, 0.0, 0.0), vekta_mpya(0.0, 0.0, -1.0));
-    D64 t1 = duara_gonga(d, m1);
+    d64 t1 = duara_gonga(d, m1);
     kama (karibu(t1, 4.0) == 0) { rudisha 1; }
     Vekta p1 = mwale_nukta(m1, t1);
     kama (karibu(p1.z, -4.0) == 0) { rudisha 2; }
