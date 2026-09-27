@@ -1,14 +1,14 @@
 husisha { vekta.swa }
 
 // Jaribio la vekta: thamani zilizokokotolewa kwa mkono.
-N32 karibu(D64 a, D64 b) {
-    D64 d = a - b;
+n32 karibu(d64 a, d64 b) {
+    d64 d = a - b;
     kama (d < 0.0) { d = 0.0 - d; }
     kama (d < 0.0001) { rudisha 1; }
     rudisha 0;
 }
 
-N32 main() {
+n32 main() {
     Vekta a = vekta_mpya(1.0, 2.0, 3.0);
     Vekta b = vekta_mpya(4.0, 5.0, 6.0);
     Vekta s = vekta_jumlisha(a, b);

@@ -15,36 +15,36 @@ husisha { faili.swa }
 // Upana na urefu: 1..4096. Msimbo wa kutoka: 0 = sawa, 1 = kosa la
 // kuandika faili au kumbukumbu, 2 = hoja zisizo sahihi.
 
-N32 UPANA_CHAGUO_MSINGI = 400;
-N32 UREFU_CHAGUO_MSINGI = 300;
-N32 SAMPULI_CHAGUO_MSINGI = 2;
-N32 KIKOMO_KIPIMO = 4096;
-N32 KIKOMO_SAMPULI = 8;
+n32 UPANA_CHAGUO_MSINGI = 400;
+n32 UREFU_CHAGUO_MSINGI = 300;
+n32 SAMPULI_CHAGUO_MSINGI = 2;
+n32 KIKOMO_KIPIMO = 4096;
+n32 KIKOMO_SAMPULI = 8;
 
 // Soma nambari kamili chanya kutoka `s` (tarakimu 1..9 tu). Inarudisha -1
 // kama `s` si nambari kamili.
-N32 soma_hoja(N8* s) {
-    N32 n = urefu_wa_mfuatano(s);
+n32 soma_hoja(n8* s) {
+    n32 n = urefu_wa_mfuatano(s);
     kama (n < 1 || n > 9) { rudisha 0 - 1; }
-    N32 i = 0;
+    n32 i = 0;
     wakati (i < n) {
-        N32 c = s[i] & 255;
+        n32 c = s[i] & 255;
         kama (c < 48 || c > 57) { rudisha 0 - 1; }
         i = i + 1;
     }
     rudisha mfuatano_hadi_n32(s);
 }
 
-W0 onyesha_matumizi() {
+w0 onyesha_matumizi() {
     andika_stderr("matumizi: miale [upana urefu [sampuli [faili.ppm]]]\n", 0, 0, 0, 0, 0, 0);
     andika_stderr("  upana, urefu: 1..%d   sampuli: 1..%d\n", KIKOMO_KIPIMO, KIKOMO_SAMPULI, 0, 0, 0, 0);
 }
 
-N32 main(N32 argc, N8** argv) {
-    N32 upana = UPANA_CHAGUO_MSINGI;
-    N32 urefu = UREFU_CHAGUO_MSINGI;
-    N32 sampuli = SAMPULI_CHAGUO_MSINGI;
-    N8* towe = "miale.ppm";
+n32 main(n32 argc, n8** argv) {
+    n32 upana = UPANA_CHAGUO_MSINGI;
+    n32 urefu = UREFU_CHAGUO_MSINGI;
+    n32 sampuli = SAMPULI_CHAGUO_MSINGI;
+    n8* towe = "miale.ppm";
 
     kama (argc == 2 || argc > 5) { onyesha_matumizi(); rudisha 2; }
     kama (argc >= 3) {
@@ -66,12 +66,12 @@ N32 main(N32 argc, N8** argv) {
     }
     kama (argc >= 5) { towe = argv[4]; }
 
-    N8* picha = tenga(chora_ukubwa(upana, urefu));
+    n8* picha = tenga(chora_ukubwa(upana, urefu));
     kama (picha == 0) {
         andika_stderr("kosa: kumbukumbu imeisha (picha %d x %d)\n", upana, urefu, 0, 0, 0, 0);
         rudisha 1;
     }
-    N64 urefu_wa_faili = chora_picha(picha, upana, urefu, sampuli);
+    n64 urefu_wa_faili = chora_picha(picha, upana, urefu, sampuli);
     kama (faili_andika_yote(towe, picha, urefu_wa_faili) != 0) {
         andika_stderr("kosa: imeshindwa kuandika %s\n", towe, 0, 0, 0, 0, 0);
         rudisha 1;

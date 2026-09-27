@@ -4,7 +4,7 @@ husisha { vekta.swa }
 
 muundo Mwale { Vekta asili; Vekta mwelekeo; };
 
-muundo Duara { Vekta kituo; D64 nusu_kipenyo; Vekta rangi; };
+muundo Duara { Vekta kituo; d64 nusu_kipenyo; Vekta rangi; };
 
 Mwale mwale_mpya(Vekta asili, Vekta mwelekeo) {
     Mwale m;
@@ -14,23 +14,23 @@ Mwale mwale_mpya(Vekta asili, Vekta mwelekeo) {
 }
 
 // Nukta kwenye mwale kwa umbali t: asili + mwelekeo * t
-Vekta mwale_nukta(Mwale m, D64 t) {
+Vekta mwale_nukta(Mwale m, d64 t) {
     rudisha vekta_jumlisha(m.asili, vekta_zidisha(m.mwelekeo, t));
 }
 
 // Makutano ya mwale na duara kwa fomula ya kawaida ya quadratic.
 // Rudisha umbali t wa makutano ya karibu zaidi yenye t > epsilon,
 // au -1.0 kama hakuna makutano.
-D64 duara_gonga(Duara d, Mwale m) {
-    D64 epsilon = 0.001;
+d64 duara_gonga(Duara d, Mwale m) {
+    d64 epsilon = 0.001;
     Vekta oc = vekta_toa(m.asili, d.kituo);
-    D64 a = vekta_nukta(m.mwelekeo, m.mwelekeo);
-    D64 h = vekta_nukta(oc, m.mwelekeo);
-    D64 c = vekta_nukta(oc, oc) - (d.nusu_kipenyo * d.nusu_kipenyo);
-    D64 diskriminanti = (h * h) - (a * c);
+    d64 a = vekta_nukta(m.mwelekeo, m.mwelekeo);
+    d64 h = vekta_nukta(oc, m.mwelekeo);
+    d64 c = vekta_nukta(oc, oc) - (d.nusu_kipenyo * d.nusu_kipenyo);
+    d64 diskriminanti = (h * h) - (a * c);
     kama (diskriminanti < 0.0) { rudisha 0.0 - 1.0; }
-    D64 mzizi = mzizi_hesabu(diskriminanti);
-    D64 t = ((0.0 - h) - mzizi) / a;
+    d64 mzizi = mzizi_hesabu(diskriminanti);
+    d64 t = ((0.0 - h) - mzizi) / a;
     kama (t > epsilon) { rudisha t; }
     t = ((0.0 - h) + mzizi) / a;
     kama (t > epsilon) { rudisha t; }

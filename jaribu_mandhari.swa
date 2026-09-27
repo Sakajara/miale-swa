@@ -4,22 +4,22 @@ husisha { mandhari.swa }
 // Jiometri yote imekokotolewa kwa mkono (taa nuru=(-3,5,-0.5), sakafu y=-1,
 // duara nyekundu kituo (-1.2,0,-4) r=1).
 
-N32 karibu(D64 a, D64 b, D64 kosa) {
-    D64 d = a - b;
+n32 karibu(d64 a, d64 b, d64 kosa) {
+    d64 d = a - b;
     kama (d < 0.0) { d = 0.0 - d; }
     kama (d < kosa) { rudisha 1; }
     rudisha 0;
 }
 
 // Je, nukta p imefichwa kutoka kwenye taa? (kwa kutumia nuru ya kimataifa)
-N32 kivuli_cha(Vekta p) {
+n32 kivuli_cha(Vekta p) {
     Vekta kwa_taa = vekta_toa(nuru, p);
-    D64 umbali = vekta_urefu(kwa_taa);
+    d64 umbali = vekta_urefu(kwa_taa);
     kwa_taa = vekta_sawazisha(kwa_taa);
     rudisha imefichwa(p, kwa_taa, umbali);
 }
 
-N32 main() {
+n32 main() {
     jenga_ulimwengu();
 
     // 1. Katikati ya kivuli cha duara jekundu kwenye sakafu: mstari kutoka taa
@@ -55,7 +55,7 @@ N32 main() {
     //    duara la buluu (kielezo 2, kituo (0.1,-0.65,-2.2) r=0.35) kwanza:
     //    t = 5.2 - sqrt(0.35^2 - 0.1^2) = 5.2 - 0.33541 = 4.86459
     Mwale kwenda_buluu = mwale_mpya(vekta_mpya(0.0, 0.0 - 0.65, 3.0), vekta_mpya(0.0, 0.0, 0.0 - 1.0));
-    D64 t = mwale_karibu(kwenda_buluu);
+    d64 t = mwale_karibu(kwenda_buluu);
     kama (karibu(t, 4.86459, 0.001) == 0) { rudisha 8; }
     kama (gonga_kielezo != 2) { rudisha 9; }
 
